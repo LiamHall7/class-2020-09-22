@@ -17,7 +17,6 @@ library(janitor)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ### Scene 0
 
 **Prompt:**  First, figure out what is wrong with the `sep_old` object. Edit the above code to fix it.
@@ -36,24 +35,40 @@ sep_old <-
   filter(! is.na(course_title)) %>% 
   select(-grad, -non_degree, -x_reg, -vus, -employee, 
          -withdraw, -total, -instructor_full_name, -course_section_code) %>%
+  group_by(course_title) %>% 
   rename(id = course_id,
          title = course_title,
          name = course_name,
          department = course_department) %>% 
+  group_by(id, title, name, department) %>% 
+  summarize(u_grad = sum(u_grad), .groups = "drop") %>% 
   filter(u_grad > 10)
 
 # But this is not correct! Look for Gov 50: Data. What do you see? What can you
 # do to clean it up?
 ```
 
-
-
-
 ### Scene 1
 
 **Prompt:** Read in and clean the new data, creating an object called `sep_new`. 
 
-
+```{r sc1}
+sep_new <- 
+  read_excel("new_data/class_enrollment_summary_by_term_9-21-2020.xlsx", 
+             skip = 3) %>% 
+  clean_names() %>% 
+  filter(! is.na(course_title)) %>% 
+  select(-grad, -non_degree, -x_reg, -vus, -employee, 
+         -withdraw, -total, -instructor_full_name, -course_section_code) %>%
+  group_by(course_title) %>% 
+  rename(id = course_id,
+         title = course_title,
+         name = course_name,
+         department = course_department) %>% 
+  group_by(id, title, name, department) %>% 
+  summarize(u_grad = sum(u_grad), .groups = "drop") %>% 
+  filter(u_grad > 10)
+```
 
 ### Scene 2
 
@@ -61,18 +76,26 @@ sep_old <-
 
 Before we start on the model, Wisdom suggests we should:
 
+Gather all possible data
+Group by all duplicates
+Eliminate inapplicable data
+Understand that students add and drop classes and enrollments may change
+Compare enrollment numbers between Sept 1 and Sept 22
+Check in with professors whose classes have seen large decline in enrollment
 
 After we have a model, Temperance suggests we should:
 
-
+Recognize that students' mentalities are hard to capture through data
+External circumstances could be the reason for dropped classes
 
 ### Scene 3
 
 **Prompt:** Which classes had the biggest increases and decreases in undergraduate enrollments between September 1 and today? Make a graphic that shows the 5 biggest increases and decreases. Make it look nice.
 
-
-
-
+```{r}
+sep_old %>% 
+  left_join(sep_new, suffix = c(new, new))
+```
 
 ## Scene 4
 
